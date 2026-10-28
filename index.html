@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A6C78">
+<meta name="robots" content="noindex,nofollow">
+<title>Preço de Telas</title>
+<style>
+:root{--bg:#F2F5F6;--surface:#fff;--ink:#13242B;--muted:#587078;--line:#D5DDE1;--accent:#0A6C78;--soft:#E4EEF0;--warn:#A5560A;
+ --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#0E1A1F;--surface:#16252B;--ink:#E5EEF1;--muted:#93A8B0;--line:#294049;--accent:#52C2CF;--soft:#1D3239;--warn:#E9A55C;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans);padding:20px max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left))}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:22px;margin:0;font-weight:650}
+.sub{font:13px var(--mono);color:var(--muted)}
+label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+#q{width:100%;font:500 22px var(--mono);padding:14px 16px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);margin-top:6px}
+#q:focus-visible,.chip:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 14px var(--mono);padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--accent);background:var(--soft)}
+.vazio{padding:22px;border:1.5px dashed var(--line);border-radius:8px;color:var(--muted)}
+.vazio b{color:var(--ink)}
+.mod{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.mod h2{font:600 20px var(--mono);margin:0}
+.mod span{color:var(--muted);font-size:13px}
+.lista{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.qual{font-weight:600;font-size:16px;min-width:0;overflow-wrap:anywhere}
+.qual small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.preco{font:600 26px var(--mono);white-space:nowrap;text-align:right}
+.preco small{display:block;font:500 11px var(--sans);color:var(--warn);letter-spacing:.04em;text-transform:uppercase}
+.nota{font-size:12px;color:var(--muted)}
+@media(max-width:480px){#q{font-size:19px}.preco{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Preço de Telas</h1><div class="sub" id="ref">carregando…</div></header>
+  <div><label for="q">Modelo do aparelho</label>
+  <input id="q" type="text" inputmode="search" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ex.: A12"></div>
+  <div class="chips" id="sug"></div>
+  <section id="res" aria-live="polite"></section>
+  <div class="nota" id="rodape"></div>
+</div>
+<script>
+var D=null,$=function(i){return document.getElementById(i)};
+var brl=new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
+function norm(s){return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim()}
+function comp(s){return norm(s).replace(/[^a-z0-9]/g,"")}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function dataBR(i){var p=i.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
+function lev(a,b){if(a===b)return 0;var m=a.length,n=b.length;if(!m)return n;if(!n)return m;var p=[],c=[],i,j;for(j=0;j<=n;j++)p[j]=j;for(i=1;i<=m;i++){c[0]=i;for(j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a.charCodeAt(i-1)===b.charCodeAt(j-1)?0:1));p=c.slice()}return p[n]}
+function achar(qk){var qc=comp(qk);return D.modelos.filter(function(m){return m.k.indexOf(qk)>=0||(qc&&comp(m.k).indexOf(qc)>=0)}).sort(function(a,b){return (a.k===qk?-1:0)-(b.k===qk?-1:0)||a.k.length-b.k.length})}
+function parecidos(qk){var qc=comp(qk),lim=Math.max(1,Math.floor(qc.length/4));if(qc.length<2)return[];
+  return D.modelos.map(function(m){var kc=comp(m.k);return{m:m,d:lev(qc,kc),ok:qc.replace(/\D/g,"")===kc.replace(/\D/g,"")}}).filter(function(x){return x.ok&&x.d>0&&x.d<=lim}).sort(function(a,b){return a.d-b.d}).slice(0,5).map(function(x){return x.m})}
+function chips(l){return l.map(function(m){return '<button type="button" class="chip" data-k="'+esc(m.k)+'">'+esc(m.m)+'</button>'}).join("")}
+function render(){
+  var qk=norm($("q").value),sug=$("sug"),res=$("res");
+  if(!D){return}
+  if(!qk){sug.innerHTML="";res.innerHTML='<div class="vazio"><b>Digite o modelo</b> para ver o preço de cada qualidade de tela.</div>';return}
+  var l=achar(qk);
+  if(!l.length){sug.innerHTML="";var p=parecidos(qk);
+    res.innerHTML='<div class="vazio"><b>Sem preço para “'+esc($("q").value.trim())+'”.</b> Confira o nome do modelo ou consulte o gerente para cotar com o fornecedor.</div>'+(p.length?'<p class="nota" style="margin:12px 0 6px">Você quis dizer?</p><div class="chips">'+chips(p)+'</div>':'');return}
+  var ex=l.filter(function(m){return m.k===qk})[0]||(l.length===1?l[0]:null);
+  sug.innerHTML=chips(l.filter(function(m){return m!==ex}).slice(0,12));
+  if(!ex){res.innerHTML='<div class="vazio"><b>Vários modelos combinam.</b> Escolha um acima.</div>';return}
+  res.innerHTML='<div class="mod"><h2>'+esc(ex.m)+'</h2><span>'+ex.q.length+(ex.q.length===1?" qualidade":" qualidades")+'</span></div><div class="lista">'+ex.q.map(function(q){
+    return '<div class="item"><div class="qual">'+esc(q.q)+'<small>referência '+dataBR(q.d)+(q.cot?" · cotação":"")+'</small></div><div class="preco">'+(q.min?'<small>preço mínimo</small>':'')+brl.format(q.p)+'</div></div>'}).join("")+'</div>';
+}
+$("q").addEventListener("input",render);
+document.addEventListener("click",function(e){var c=e.target.closest(".chip");if(c){var m=D.modelos.filter(function(x){return x.k===c.dataset.k})[0];$("q").value=m.m;render();window.scrollTo({top:0,behavior:"smooth"})}});
+fetch("prices.json?v="+Date.now()).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+  D=j;$("ref").textContent="atualizado em "+dataBR(j.gerado)+" · compras até "+j.ate;
+  $("rodape").textContent="Preço de venda da tela. Valores sujeitos a confirmação do gerente.";render();
+}).catch(function(){$("ref").textContent="";$("res").innerHTML='<div class="vazio"><b>Não consegui carregar os preços.</b> Verifique a internet e recarregue a página.</div>'});
+</script>
+</body>
+</html>
