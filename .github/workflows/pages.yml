@@ -24,7 +24,7 @@ jobs:
       - name: Montar pasta do site
         run: |
           mkdir _site
-          cp index.html prices.json _site/
+          cp index.html dados.json _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
